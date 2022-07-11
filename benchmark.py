@@ -109,4 +109,4 @@ results: List[pd.DataFrame] = [
 all_results = pd.concat(results, axis=1)
 
 # export to csv so it can be used in a notebook
-all_results.to_csv('results.csv', sep=',')
+all_results.to_csv('results.csv', sep=',', index=False)
