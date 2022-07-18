@@ -2,6 +2,7 @@
 import os
 import time
 import rdflib
+import json
 from dataclasses import dataclass, field
 import pandas as pd
 from typing import List, Dict
@@ -58,15 +59,38 @@ class Format:
 
         for i in range(0, self.N_RUNS):
             graph = rdflib.Graph()
-            
+            graph.parse(self.graph_file)
             start = time.time()
-            graph.serialize(destination="graph.ttl")
-            end = time.time()
 
+            # using ID-graph dictionary compression
+            idGraph = {
+                "subjects": {},
+                "predicates": {},
+                "objects": {}
+            }
+
+            subjectCount = 1
+            predicateCount = 1
+            objectCount = 1
+
+            for s, p, o in graph:
+                idGraph["subjects"].update({subjectCount: s})
+                idGraph["predicates"].update({predicateCount: p})
+                idGraph["objects"].update({objectCount: o})
+
+                subjectCount += 1
+                predicateCount += 1
+                objectCount += 1
+
+            end = time.time()
             samples.append(end - start)
+                
+            with open('data.json', 'w', encoding='utf-8') as file:
+                json.dump(idGraph, file, ensure_ascii=False, indent=4)
 
         return samples
 
+    # TODO for decode, read JSON file and then delete when done
     def decoding_time(self) -> List[float]:
         """
         Return N_RUNS samples of how long it takes
@@ -109,4 +133,4 @@ results: List[pd.DataFrame] = [
 all_results = pd.concat(results, axis=1)
 
 # export to csv so it can be used in a notebook
-all_results.to_csv('results.csv', sep=',', index=False)
+# all_results.to_csv('results.csv', sep=',', index=False)

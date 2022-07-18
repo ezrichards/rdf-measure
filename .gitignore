@@ -1,5 +1,6 @@
 # Generated benchmark results
 results.csv
+data.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
