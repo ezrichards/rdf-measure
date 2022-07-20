@@ -5,7 +5,7 @@ import rdflib
 import json
 from dataclasses import dataclass, field
 import pandas as pd
-from typing import List, Dict
+from typing import List
 
 @dataclass
 class Format:
@@ -57,36 +57,35 @@ class Format:
         """
         samples = []
 
-        for i in range(0, self.N_RUNS):
+        for _ in range(0, self.N_RUNS):
             graph = rdflib.Graph()
             graph.parse(self.graph_file)
             start = time.time()
 
             # using ID-graph dictionary compression
-            idGraph = {
-                "subjects": {},
-                "predicates": {},
-                "objects": {}
-            }
-
-            subjectCount = 1
-            predicateCount = 1
-            objectCount = 1
+            idTerm = {}
+            triples = []
 
             for s, p, o in graph:
-                idGraph["subjects"].update({subjectCount: s})
-                idGraph["predicates"].update({predicateCount: p})
-                idGraph["objects"].update({objectCount: o})
+                idTerm.update({hash(s): s})
+                idTerm.update({hash(p): p})
+                idTerm.update({hash(o): o})
 
-                subjectCount += 1
-                predicateCount += 1
-                objectCount += 1
+                triple = [] 
+
+                triple.append(hash(s))
+                triple.append(hash(p))
+                triple.append(hash(o))
+
+                triples.append(triple)
+
+            idTerm.update({"triples": triples})
 
             end = time.time()
             samples.append(end - start)
                 
-            with open('data.json', 'w', encoding='utf-8') as file:
-                json.dump(idGraph, file, ensure_ascii=False, indent=4)
+            with open('idterm.json', 'w', encoding='utf-8') as file:
+                json.dump(idTerm, file, ensure_ascii=False, indent=4)
 
         return samples
 
