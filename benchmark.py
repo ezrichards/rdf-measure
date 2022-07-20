@@ -84,7 +84,7 @@ class Format:
             end = time.time()
             samples.append(end - start)
                 
-            with open('idterm.json', 'w', encoding='utf-8') as file:
+            with open('data.json', 'w', encoding='utf-8') as file:
                 json.dump(idTerm, file, ensure_ascii=False, indent=4)
 
         return samples
