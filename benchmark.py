@@ -59,6 +59,9 @@ class Format:
 
         for _ in range(0, self.N_RUNS):
             graph = rdflib.Graph()
+            # graph.serialize type specific to child class 
+            # override in methods below
+
             graph.parse(self.graph_file)
             start = time.time()
 
