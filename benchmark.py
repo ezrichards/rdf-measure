@@ -8,6 +8,8 @@ from dataclasses import dataclass, field
 import pandas as pd
 from typing import List
 from farmhash import FarmHash32
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 @dataclass
 class Format:
@@ -51,20 +53,14 @@ class Format:
         Return the size of the format, in bytes
         """
         return os.path.getsize(self.graph_file)
-  
-    def encoding_time(self) -> List[float]:
+
+    def encoding_time(self, graph) -> List[float]:
         """
         Return N_RUNS samples of how long it takes
         to encode the file
-        """
+        """        
         samples = []
-
         for _ in range(0, self.N_RUNS):
-            graph = rdflib.Graph()
-            # graph.serialize type specific to child class 
-            # override in methods below
-
-            graph.parse(self.graph_file)
             start = time.time()
 
             # using ID-graph dictionary compression
@@ -73,9 +69,9 @@ class Format:
             triples = []
 
             for s, p, o in graph:
-                idTerms.update({FarmHash32(s): s})
-                idTerms.update({FarmHash32(p): p})
-                idTerms.update({FarmHash32(o): o})
+                idTerms.update({str(FarmHash32(s)): s})
+                idTerms.update({str(FarmHash32(p)): p})
+                idTerms.update({str(FarmHash32(o)): o})
 
                 triple = [] 
 
@@ -93,6 +89,14 @@ class Format:
 
             with open('data.json', 'w', encoding='utf-8') as file:
                 json.dump(idTerm, file, ensure_ascii=False, indent=4)
+            
+            df = pd.DataFrame.from_dict(idTerms, orient='index')
+            
+            table = pa.Table.from_pandas(df)
+
+            print(table)
+
+            pq.write_table(table, "data1.parquet")
 
         return samples
 
@@ -110,14 +114,15 @@ class Format:
             file = open('data.json')
             data = json.load(file)
 
+            table = pq.read_table('data1.parquet')
+
+            # print("DECODE:", table.to_pandas())
+
             for triple in data['triples']:
                 s = rdflib.URIRef(data['idTerm'][str(triple[0])])
                 p = rdflib.URIRef(data['idTerm'][str(triple[1])])
                 o = rdflib.Literal(data['idTerm'][str(triple[2])])
-                
                 graph.add((s, p, o))
-                
-            print(graph.serialize())
 
             file.close()
             end = time.time()
@@ -126,60 +131,38 @@ class Format:
         return samples
 
 class NTriples(Format):
-    #         graph = rdflib.Graph()
-    #         graph.serialize(format='n3')
-
-    pass
-    # def encoding_time(self) -> List[float]:
-    #     samples = []
-
-    #     for _ in range(0, self.N_RUNS):
-    #         graph = rdflib.Graph()
-    #         graph.serialize(format='n3')
-    #         graph.parse(self.graph_file)
-    #         start = time.time()
-
-    #         # using ID-graph dictionary compression
-    #         idTerm = {}
-    #         triples = []
-
-    #         for s, p, o in graph:
-    #             idTerm.update({hash(s): s})
-    #             idTerm.update({hash(p): p})
-    #             idTerm.update({hash(o): o})
-
-    #             triple = [] 
-
-    #             triple.append(hash(s))
-    #             triple.append(hash(p))
-    #             triple.append(hash(o))
-
-    #             triples.append(triple)
-
-    #         idTerm.update({"triples": triples})
-
-    #         end = time.time()
-    #         samples.append(end - start)
-                
-    #         with open('data.json', 'w', encoding='utf-8') as file:
-    #             json.dump(idTerm, file, ensure_ascii=False, indent=4)
-
-    #     return samples
+    def encoding_time(self) -> List[float]:
+        graph = rdflib.Graph()
+        graph.parse(self.graph_file)
+        graph.serialize(format='n3')
+        super().encoding_time(graph)
 
 class Turtle(Format):
-    graph = rdflib.Graph()
-    graph.serialize(format='ttl')
+    def encoding_time(self) -> List[float]:
+        graph = rdflib.Graph()
+        graph.parse(self.graph_file)
+        graph.serialize(format='ttl')
+        super().encoding_time(graph)
 
 class JSONLD(Format):
-    graph = rdflib.Graph()
-    graph.serialize(format='json-ld')
+    def encoding_time(self) -> List[float]:
+        graph = rdflib.Graph()
+        graph.parse(self.graph_file)
+        graph.serialize(format='json-ld')
+        super().encoding_time(graph)
 
 class RDFXML(Format):
-    graph = rdflib.Graph()
-    graph.serialize(format='xml')
+    def encoding_time(self) -> List[float]:
+        graph = rdflib.Graph()
+        graph.parse(self.graph_file)
+        graph.serialize(format='xml')
+        super().encoding_time(graph)
 
 results: List[pd.DataFrame] = [
-    NTriples(graph_file='graphs/bldg1.ttl', name='NTriples').run()
+    NTriples(graph_file='graphs/bldg1.ttl', name='NTriples').run(),
+    # Turtle(graph_file='graphs/bldg1.ttl', name='Turtle').run(),
+    # JSONLD(graph_file='graphs/bldg1.ttl', name='JSON-LD').run(),
+    # RDFXML(graph_file='graphs/bldg1.ttl', name='RDF-XML').run()
 ]
 
 # 1 dataframe with all benchmarks
