@@ -161,6 +161,9 @@ class RDFXML(Format):
 
 results: List[pd.DataFrame] = [
     NTriples(graph_file='graphs/bldg1.ttl', name='NTriples').run(),
+    Turtle(graph_file='graphs/bldg1.ttl', name='Turtle').run(),
+    JSONLD(graph_file='graphs/bldg1.ttl', name='JSON-LD').run(),
+    RDFXML(graph_file='graphs/bldg1.ttl', name='RDF-XML').run()
 ]
 
 # 1 dataframe with all benchmarks
