@@ -25,6 +25,7 @@ class Format:
         """
         Runs all of the benchmarks
         """
+        print(f"run {self.name}")
         self.add_records(self.size)
         self.add_records(self.encoding_time)
         self.add_records(self.decoding_time)
@@ -126,6 +127,11 @@ class NTriples(Format):
         graph.serialize(format='n3')
         return super().encoding_time(graph)
 
+    def size(self) -> int:
+        graph = rdflib.Graph()
+        graph.parse(self.graph_file)
+        return len(graph.serialize(format='n3'))
+
     def decoding_time(self) -> List[float]:
         return super().decoding_time("n3")
 
@@ -135,6 +141,11 @@ class Turtle(Format):
         graph.parse(self.graph_file)
         graph.serialize(format='ttl')
         return super().encoding_time(graph)
+
+    def size(self) -> int:
+        graph = rdflib.Graph()
+        graph.parse(self.graph_file)
+        return len(graph.serialize(format='ttl'))
 
     def decoding_time(self) -> List[float]:
         return super().decoding_time("ttl")
@@ -146,6 +157,11 @@ class JSONLD(Format):
         graph.serialize(format='json-ld')
         return super().encoding_time(graph)
 
+    def size(self) -> int:
+        graph = rdflib.Graph()
+        graph.parse(self.graph_file)
+        return len(graph.serialize(format='json-ld'))
+
     def decoding_time(self) -> List[float]:
         return super().decoding_time("json-ld")
 
@@ -155,6 +171,11 @@ class RDFXML(Format):
         graph.parse(self.graph_file)
         graph.serialize(format='xml')
         return super().encoding_time(graph)
+
+    def size(self) -> int:
+        graph = rdflib.Graph()
+        graph.parse(self.graph_file)
+        return len(graph.serialize(format='xml'))
 
     def decoding_time(self) -> List[float]:
         return super().decoding_time("xml")
@@ -167,7 +188,7 @@ results: List[pd.DataFrame] = [
 ]
 
 # 1 dataframe with all benchmarks
-all_results = pd.concat(results, axis=1)
+all_results = pd.concat(results, axis=0)
 
 # export to csv so it can be used in a notebook
 all_results.to_csv('results.csv', sep=',', index=False)
