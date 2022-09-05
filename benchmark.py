@@ -199,9 +199,8 @@ class ParquetSorted(Format):
                 "triples": triples
             })
 
-            # TODO: more sophisticated sorting
-            # termDataframe.sort_values()
-            # tripleDataframe.sort_values()
+            termDataframe.to_html('test.html')
+            # termDataframe.sort_values(by='terms')
 
             termsTable = pa.Table.from_pandas(termDataframe, preserve_index=True)
             triplesTable = pa.Table.from_pandas(tripleDataframe)
@@ -223,8 +222,8 @@ class ParquetSorted(Format):
             start = time.time()
             graph = rdflib.Graph()
 
-            termsTable = pq.read_table('terms.parquet').to_pandas()
-            triplesTable = pq.read_table('triples.parquet')
+            termsTable = pq.read_table('terms_sorted.parquet').to_pandas()
+            triplesTable = pq.read_table('triples_sorted.parquet')
 
             terms = termsTable.to_dict()
             for triple in triplesTable.to_pydict()['triples']:
@@ -309,6 +308,13 @@ results: List[pd.DataFrame] = [
     ParquetSorted(graph_file='graphs/bldg1.ttl', name='Parquet-Sorted').run(),
     ParquetUnsorted(graph_file='graphs/bldg1.ttl', name='Parquet-Unsorted').run(),
 ]
+
+# clean up files
+os.remove('data.json')
+os.remove('terms.parquet')
+os.remove('triples.parquet')
+os.remove('terms_sorted.parquet')
+os.remove('triples_sorted.parquet')
 
 # 1 dataframe with all benchmarks
 all_results = pd.concat(results, axis=0)
