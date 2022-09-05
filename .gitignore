@@ -1,7 +1,10 @@
 # Generated benchmark results
 results.csv
+data.json
 terms.parquet
 triples.parquet
+terms_sorted.parquet
+triples_sorted.parquet
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
