@@ -183,24 +183,29 @@ class ParquetSorted(Format):
         for _ in range(0, self.N_RUNS):
             start = time.time()
             idTerms = {}
-            triples = []
+            subjects = []
+            predicates = []
+            objects = []
 
             for s, p, o in graph:
                 idTerms.update({str(FarmHash32(s)): s})
                 idTerms.update({str(FarmHash32(p)): p})
                 idTerms.update({str(FarmHash32(o)): o})
-                triples.append((FarmHash32(s), FarmHash32(p), FarmHash32(o)))
+                subjects.append(FarmHash32(s))
+                predicates.append(FarmHash32(p))
+                objects.append(FarmHash32(o))
 
             termDataframe = pd.DataFrame({
                 "terms": idTerms
             })
-
+    
             tripleDataframe = pd.DataFrame({
-                "triples": triples
+                "subject": subjects,
+                "predicate": predicates,
+                "object": objects
             })
 
-            termDataframe.to_html('test.html')
-            # termDataframe.sort_values(by='terms')
+            tripleDataframe = tripleDataframe.sort_values(by='subject', ascending=True)
 
             termsTable = pa.Table.from_pandas(termDataframe, preserve_index=True)
             triplesTable = pa.Table.from_pandas(tripleDataframe)
@@ -226,11 +231,12 @@ class ParquetSorted(Format):
             triplesTable = pq.read_table('triples_sorted.parquet')
 
             terms = termsTable.to_dict()
-            for triple in triplesTable.to_pydict()['triples']:
-                s = rdflib.URIRef(terms['terms'][str(triple[0])])
-                p = rdflib.URIRef(terms['terms'][str(triple[1])])
-                o = rdflib.Literal(terms['terms'][str(triple[2])])
-                graph.add((s, p, o))
+
+            # for triple in triplesTable.to_pydict()['triples']:
+            #     s = rdflib.URIRef(terms['terms'][str(triple[0])])
+            #     p = rdflib.URIRef(terms['terms'][str(triple[1])])
+            #     o = rdflib.Literal(terms['terms'][str(triple[2])])
+            #     graph.add((s, p, o))
 
             end = time.time()
             samples.append(end - start)
