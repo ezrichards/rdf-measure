@@ -228,15 +228,20 @@ class ParquetSorted(Format):
             graph = rdflib.Graph()
 
             termsTable = pq.read_table('terms_sorted.parquet').to_pandas()
-            triplesTable = pq.read_table('triples_sorted.parquet')
+            triplesTable = pq.read_table('triples_sorted.parquet').to_pandas()
 
             terms = termsTable.to_dict()
+            triples = triplesTable.to_dict()
 
-            # for triple in triplesTable.to_pydict()['triples']:
-            #     s = rdflib.URIRef(terms['terms'][str(triple[0])])
-            #     p = rdflib.URIRef(terms['terms'][str(triple[1])])
-            #     o = rdflib.Literal(terms['terms'][str(triple[2])])
-            #     graph.add((s, p, o))
+            tripleTuples = []
+            for i in range(0, len(triples['subject'])):
+                tripleTuples.append((triples['subject'][i], triples['predicate'][i], triples['object'][i]))
+
+            for s, p, o in tripleTuples:
+                s = rdflib.URIRef(terms['terms'][str(s)])
+                p = rdflib.URIRef(terms['terms'][str(p)])
+                o = rdflib.Literal(terms['terms'][str(o)])
+                graph.add((s, p, o))
 
             end = time.time()
             samples.append(end - start)
